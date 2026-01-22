@@ -1,0 +1,14 @@
+services:
+  api:
+    build: 
+      context: ./ResumeApi
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+
+  processor:
+    build: 
+      context: ./service-python
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"

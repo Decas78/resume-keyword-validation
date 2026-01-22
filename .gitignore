@@ -1,0 +1,8 @@
+service-python/__pycache__/
+service-python/*.pyc
+service-python/venv/
+service-python/.venv/
+ResumeApi/bin/
+ResumeApi/obj/
+.github/copilot-instructions.md
+.env
