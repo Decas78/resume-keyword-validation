@@ -1,22 +1,21 @@
-# API Request Logger
+# API Resume Keyword Validation
 
-A multiservice logging system where RequestLogger.Api receives requests and processes these whilst
-services currently communicate via the internal docker network.
+A .NET Api that will receive file uploads and send these to a python FastAPI endpoint for processing of a keyword
 
 ## Problem Statement
-"How do you reliably capture, process, and persist HTTP request metadata from a production API without impacting request latency?"
+"How do you upload files to a .NET webapi and then process this asynchronously in Python"
 
 ## Architecture
 
 ### How Logs Flow
-- **RequestLogger.Api** (.NET 8 minimal API): Contains test endpoints for HTTP requests forwarding logs to the python processor service
-- **service-python** (FastAPI): Receives structured log entries and processes them (currently just prints to console)
+- **ResumeApi** (.NET 8 minimal API): Contains endpoint for HTTP file upload and logic for forwarding to service-python
+- **service-python** (FastAPI): Receives file upload and processes for keyword returning result to resumeApi
 
 ### Why Two Services?
-I have chosen to use two API services to decouple logic. .NET will handle validation, authentication and logic. Python will handle logging and persistence via Azure SQL.
+I have chosen to use two API services to decouple logic. .NET will handle validation, authentication and file upload. Python will the keyword search.
 
 ## End Goal
-A backend logging pipeline where a .NET API captures request and response metadata via middleware, forwards structured logs to a Python processor for validation and persistence, and stores queryable request data in Azure SQL.
+?
 
 ## Installation & Run
 Ensure to have the following installed:
