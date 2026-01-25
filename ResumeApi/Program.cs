@@ -19,6 +19,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.MapGet("/", () => "Resume API is running.");
+
 app.MapGet("/generate-token", (
     IAntiforgery antiforgery,
     HttpContext httpContext) =>
