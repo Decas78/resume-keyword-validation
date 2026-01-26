@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using System.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAntiforgery();
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
@@ -27,27 +30,43 @@ app.MapGet("/generate-token", (
     new {antiforgery.GetAndStoreTokens(httpContext).RequestToken });
 
 
-app.MapPost("/upload-file", async (
+app.MapPost("/upload-resume", async (
 	IFormFile file,
-	[FromForm(Name = "__RequestVerificationToken")] string token
-	) =>
+	[FromForm(Name = "__RequestVerificationToken")] string token,
+    IHttpClientFactory httpClientFactory,
+    CancellationToken ct) =>
 {
-    var directory = $"{Environment.CurrentDirectory}/Files";
-    
-    if (!Directory.Exists(directory))
+    if (file == null || file.Length == 0)
     {
-        Directory.CreateDirectory(directory);
+        return Results.BadRequest("No file uploaded.");
     }
-    var fullFilePath = $"{directory}/{file.FileName}";
+    var pythonUrl = "http://processor:8000/process-resume";
+    using var client = httpClientFactory.CreateClient();
+    using var formContent = new MultipartFormDataContent();
 
-    if (!File.Exists(fullFilePath))
+    var fileContent = new StreamContent(file.OpenReadStream());
+
+    fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+    formContent.Add(fileContent, "file", file.FileName);
+
+    try
     {
-        using var fileStream = File.Create(fullFilePath);
-        await file.CopyToAsync(fileStream);
-        return new {Success = true};
-    }
+        var response = await client.PostAsync(pythonUrl, formContent, ct);
 
-    return new {Success = false};
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync(ct);
+            return Results.StatusCode((int)response.StatusCode);
+        }
+
+        // Read response from Python service
+        var pythonResult = await response.Content.ReadAsStringAsync(ct);
+        return Results.Ok(pythonResult);
+    }
+    catch (HttpRequestException ex)
+    {
+        return Results.Problem("Failed to reach Python service: " + ex.Message);
+    }
 });
 
 app.Run();
